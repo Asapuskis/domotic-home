@@ -1,0 +1,52 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    ports:
+      - "1883:1883"  # Puerto MQTT
+      - "9001:9001"  # Puerto para WebSocket (opcional)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+      - /etc/localtime:/etc/localtime:ro  # Sincronización de hora
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Madrid
+
+  mqtt-explorer:
+    image: smeagolworms4/mqtt-explorer
+    container_name: mqtt-explorer
+    ports:
+      - "4000:4000" # Puerto del cliente MQTT
+    volumes:
+      - ./mqtt-explorer/config:/mqtt-explorer/config # Carpeta local para guardar configuración
+    restart: unless-stopped
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:latest
+    container_name: zigbee2mqtt
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./zigbee2mqtt/data:/app/data
+      - /etc/localtime:/etc/localtime:ro  # Sincronización de hora
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0  # Cambia este puerto según tu adaptador Zigbee
+    environment:
+      - TZ=Europe/Madrid
+    ports:
+      - "9080:8080"  # Panel web de Zigbee2MQTT (opcional)
+    restart: unless-stopped
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered/data:/data
+      - /etc/localtime:/etc/localtime:ro  # Sincronización de hora
+    environment:
+      - TZ=Europe/Madrid
+    restart: unless-stopped
